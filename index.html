@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Script Shortener - ระบบย่อลิงก์สคริปต์ Roblox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darker: '#09090b',
+                        card: '#121215',
+                        accent: '#6366f1',
+                        accentHover: '#4f46e5'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        code, pre { font-family: 'Fira Code', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    </style>
+</head>
+<body class="bg-darker text-zinc-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <header class="border-b border-zinc-800/60 bg-darker/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-link-slash text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold tracking-tight text-base sm:text-lg text-white flex items-center gap-2">
+                        DELTA SHORTENER <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">PRO</span>
+                    </h1>
+                    <p class="text-[11px] text-zinc-400">ระบบย่อลิงก์สคริปต์และสร้าง Loadstring สำหรับ Delta</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="auth-status" class="text-[11px] px-2.5 py-1 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> เชื่อมต่อระบบ...
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto w-full p-4 sm:p-6 my-auto flex-grow">
+        
+        <!-- SHORTENER FORM SECTION -->
+        <div id="section-creator" class="space-y-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">ย่อลิงก์สคริปต์ในคลิกเดียว</h2>
+                <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">วางลิงก์ดิบ (Raw URL) หรือเขียนโค้ด Lua ของคุณ ระบบจะสร้างลิงก์สั้นและ Loadstring สำหรับรันใน Delta ให้ทันที</p>
+            </div>
+
+            <div class="bg-card border border-zinc-800/80 rounded-2xl p-5 sm:p-7 shadow-2xl space-y-5">
+                
+                <!-- Input Type Switcher -->
+                <div class="grid grid-cols-2 gap-2 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800/80">
+                    <button onclick="switchInputType('url')" id="tab-url" class="py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-globe"></i> ใช้ลิงก์ดิบ (Raw URL)
+                    </button>
+                    <button onclick="switchInputType('code')" id="tab-code" class="py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg text-zinc-400 hover:text-white transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-code"></i> พิมพ์/วางโค้ด Lua
+                    </button>
+                </div>
+
+                <!-- URL Input Group -->
+                <div id="group-url" class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">ลิงก์ดิบ (GitHub Raw, Pastebin, etc.)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                            <i class="fa-solid fa-link"></i>
+                        </span>
+                        <input type="url" id="input-raw-url" placeholder="https://raw.githubusercontent.com/user/repo/main/script.lua" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3.5 text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <!-- Code Input Group -->
+                <div id="group-code" class="space-y-2 hidden">
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">ชื่อสคริปต์ / โครงการ</label>
+                    <input type="text" id="input-script-title" placeholder="เช่น Blox Fruits Hub v1" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs sm:text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition mb-3">
+                    
+                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">โค้ดสคริปต์ Lua ของคุณ</label>
+                    <textarea id="input-lua-code" rows="7" placeholder="print('Hello Delta Executor!')" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition"></textarea>
+                </div>
+
+                <!-- Shorten Action Button -->
+                <button onclick="shortenScript()" id="shorten-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-bold py-4 rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-sm sm:text-base">
+                    <i class="fa-solid fa-scissors"></i> ย่อลิงก์ & สร้าง Loadstring ทันที
+                </button>
+            </div>
+
+            <div id="result-box" class="hidden bg-card border border-indigo-500/40 rounded-2xl p-5 sm:p-6 shadow-2xl relative overflow-hidden space-y-4">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> ย่อลิงก์สคริปต์สำเร็จ!
+                    </h3>
+                    <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-md font-mono">Ready for Delta</span>
+                </div>
+
+                <!-- Short Link Result -->
+                <div>
+                    <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">ลิงก์สั้นสำหรับแชร์ (Short URL)</label>
+                    <div class="relative">
+                        <input type="text" id="res-short-url" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-3 text-xs sm:text-sm text-zinc-300 focus:outline-none select-all" />
+                        <button onclick="copyToClipboard('res-short-url')" class="absolute right-2 top-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> คัดลอก
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loadstring Result -->
+                <div>
+                    <label class="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Loadstring สำหรับรันใน Delta</label>
+                    <div class="relative">
+                        <input type="text" id="res-loadstring" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-3 text-xs sm:text-sm font-mono text-indigo-300 focus:outline-none select-all" />
+                        <button onclick="copyToClipboard('res-loadstring')" class="absolute right-2 top-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> คัดลอก
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="resetForm()" class="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs py-2.5 rounded-xl transition font-medium border border-zinc-800">
+                    <i class="fa-solid fa-plus"></i> ย่อลิงก์ใหม่เพิ่ม
+                </button>
+            </div>
+        </div>
+
+        <div id="section-viewer" class="hidden space-y-6">
+            <div class="bg-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                    <div>
+                        <span class="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">Delta Shortened Script</span>
+                        <h2 id="view-title" class="text-lg sm:text-xl font-extrabold text-white">กำลังโหลดชื่อสคริปต์...</h2>
+                    </div>
+                    <button onclick="goToHome()" class="text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-3 py-2 rounded-xl border border-zinc-800 transition">
+                        <i class="fa-solid fa-arrow-left"></i> สร้างลิงก์ของคุณ
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Loadstring สำหรับ Delta</label>
+                        <div class="relative">
+                            <input type="text" id="view-loadstring" readonly class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono text-indigo-300 focus:outline-none select-all" />
+                            <button onclick="copyToClipboard('view-loadstring')" class="absolute right-2 top-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg text-xs transition">
+                                <i class="fa-regular fa-copy"></i> คัดลอก
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">โค้ด Lua ต้นฉบับ</label>
+                        <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-4 max-h-96 overflow-y-auto">
+                            <pre id="view-code" class="text-xs font-mono text-zinc-300 whitespace-pre-wrap"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-6 text-xs text-zinc-600 border-t border-zinc-900">
+        Delta Script Shortener &bull; Fast & Secure Script Hosting
+    </footer>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'delta-shortener-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            projectId: ""
+        };
+
+        let db = null;
+        let auth = null;
+        let inputMode = 'url';
+
+        async function initApp() {
+            try {
+                if (firebaseConfig.projectId) {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    document.getElementById('auth-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> พร้อมใช้งาน Cloud';
+                } else {
+                    document.getElementById('auth-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-zinc-500"></span> โหมดออฟไลน์ / Local';
+                }
+            } catch (err) {
+                console.warn("Init fallback:", err);
+                document.getElementById('auth-status').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> โหมดออฟไลน์ (Local)';
+            }
+
+            // Check URL parameters
+            const params = new URLSearchParams(window.location.search);
+            const scriptId = params.get('id');
+            if (scriptId) {
+                handleResolveScript(scriptId);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+
+        window.switchInputType = function(mode) {
+            inputMode = mode;
+            const btnUrl = document.getElementById('tab-url');
+            const btnCode = document.getElementById('tab-code');
+            const groupUrl = document.getElementById('group-url');
+            const groupCode = document.getElementById('group-code');
+
+            if (mode === 'url') {
+                btnUrl.className = "py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center justify-center gap-2";
+                btnCode.className = "py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg text-zinc-400 hover:text-white transition flex items-center justify-center gap-2";
+                groupUrl.classList.remove('hidden');
+                groupCode.classList.add('hidden');
+            } else {
+                btnCode.className = "py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg bg-indigo-600 text-white transition flex items-center justify-center gap-2";
+                btnUrl.className = "py-2.5 px-3 text-xs sm:text-sm font-semibold rounded-lg text-zinc-400 hover:text-white transition flex items-center justify-center gap-2";
+                groupCode.classList.remove('hidden');
+                groupUrl.classList.add('hidden');
+            }
+        }
+
+        window.shortenScript = async function() {
+            let targetUrl = '';
+            let title = 'Delta Script';
+            let codeContent = '';
+
+            if (inputMode === 'url') {
+                const rawUrl = document.getElementById('input-raw-url').value.trim();
+                if (!rawUrl) {
+                    showToast('กรุณากรอกลิงก์ดิบ (Raw URL) ก่อน!', 'error');
+                    return;
+                }
+                targetUrl = rawUrl;
+                codeContent = `loadstring(game:HttpGet("${rawUrl}"))()`;
+                title = 'External Raw Script';
+            } else {
+                title = document.getElementById('input-script-title').value.trim() || 'Untitled Script';
+                const luaCode = document.getElementById('input-lua-code').value.trim();
+                if (!luaCode) {
+                    showToast('กรุณากรอกโค้ด Lua ของคุณ!', 'error');
+                    return;
+                }
+                codeContent = luaCode;
+            }
+
+            const btn = document.getElementById('shorten-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> กำลังย่อลิงก์...';
+
+            try {
+                const scriptId = Math.random().toString(36).substring(2, 8);
+                const payload = { title, code: codeContent, isRawUrl: inputMode === 'url', createdAt: new Date().toISOString() };
+
+                if (db && auth && auth.currentUser) {
+                    // Rule 1 path
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'shortscripts', scriptId);
+                    await setDoc(docRef, payload);
+                } else {
+                    localStorage.setItem('delta_short_' + scriptId, JSON.stringify(payload));
+                }
+
+                const baseUrl = window.location.origin + window.location.pathname;
+                const shortUrl = `${baseUrl}?id=${scriptId}`;
+                const loadstringStr = `loadstring(game:HttpGet("${shortUrl}&raw=1"))()`;
+
+                document.getElementById('res-short-url').value = shortUrl;
+                document.getElementById('res-loadstring').value = loadstringStr;
+                
+                document.getElementById('result-box').classList.remove('hidden');
+                document.getElementById('result-box').scrollIntoView({ behavior: 'smooth' });
+                showToast('ย่อลิงก์และสร้าง Loadstring สำเร็จ!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-scissors"></i> ย่อลิงก์ & สร้าง Loadstring ทันที';
+            }
+        }
+
+        async function handleResolveScript(scriptId) {
+            document.getElementById('section-creator').classList.add('hidden');
+            document.getElementById('section-viewer').classList.remove('hidden');
+
+            const params = new URLSearchParams(window.location.search);
+            const isRaw = params.get('raw') === '1';
+
+            let data = null;
+            try {
+                if (db) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'shortscripts', scriptId);
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) data = snap.data();
+                }
+                if (!data) {
+                    const local = localStorage.getItem('delta_short_' + scriptId);
+                    if (local) data = JSON.parse(local);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            if (data) {
+                if (isRaw) {
+                    document.open();
+                    document.write(`<pre style="word-wrap:break-word;white-space:pre-wrap;font-family:monospace;background:#09090b;color:#a5b4fc;padding:20px;">${escapeHtml(data.code)}</pre>`);
+                    document.close();
+                    return;
+                }
+
+                document.getElementById('view-title').innerText = data.title;
+                document.getElementById('view-code').innerText = data.code;
+                const fullUrl = window.location.href.split('&')[0];
+                document.getElementById('view-loadstring').value = `loadstring(game:HttpGet("${fullUrl}&raw=1"))()`;
+            } else {
+                document.getElementById('view-title').innerText = 'ไม่พบสคริปต์นี้ (ลิงก์อาจหมดอายุหรือผิดพลาด)';
+                document.getElementById('view-code').innerText = '-- Error 404: Script not found.';
+                document.getElementById('view-loadstring').value = '-- Not found';
+            }
+        }
+
+        window.resetForm = function() {
+            document.getElementById('result-box').classList.add('hidden');
+            document.getElementById('input-raw-url').value = '';
+            document.getElementById('input-lua-code').value = '';
+            document.getElementById('input-script-title').value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.goToHome = function() {
+            window.history.pushState({}, '', window.location.pathname);
+            document.getElementById('section-viewer').classList.add('hidden');
+            document.getElementById('section-creator').classList.remove('hidden');
+        }
+
+        window.copyToClipboard = function(elementId) {
+            const el = document.getElementById(elementId);
+            const temp = document.createElement("textarea");
+            temp.value = el.value;
+            document.body.appendChild(temp);
+            temp.select();
+            try {
+                document.execCommand('copy');
+                showToast('คัดลอกไปยังคลิปบอร์ดแล้ว!', 'success');
+            } catch (e) {
+                showToast('ไม่สามารถคัดลอกได้', 'error');
+            }
+            document.body.removeChild(temp);
+        }
+
+        window.showToast = function(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-zinc-900 border-indigo-500/40 text-indigo-300' : 'bg-zinc-900 border-red-500/40 text-red-300';
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-indigo-400"></i>' : '<i class="fa-solid fa-triangle-exclamation text-red-400"></i>';
+            
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border ${bg} shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `${icon} <span class="text-xs font-semibold text-zinc-200">${msg}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
